@@ -19,7 +19,7 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 GROQ_API_KEY     = os.getenv("GROQ_API_KEY")
 INDEX_NAME       = "medical-chatbot"
 EMBED_MODEL      = "multilingual-e5-large"
-EMBED_DIM        = 1024
+EMBED_DIM        = 384
 CHUNK_SIZE       = 500
 CHUNK_OVERLAP    = 50
 
