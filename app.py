@@ -1,5 +1,6 @@
 import os
-import fitz  # PyMuPDF
+from pypdf import PdfReader
+import io
 from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv
 from pinecone import Pinecone, ServerlessSpec
@@ -9,7 +10,7 @@ from groq import Groq
 load_dotenv()
 
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 30 * 1024 * 1024  # 30MB max upload
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max upload
 
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
@@ -47,11 +48,10 @@ def get_pinecone_index():
 
 
 def extract_text_from_pdf(pdf_bytes: bytes) -> str:
-    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    reader = PdfReader(io.BytesIO(pdf_bytes))
     text = ""
-    for page in doc:
-        text += page.get_text()
-    doc.close()
+    for page in reader.pages:
+        text += page.extract_text() or ""
     return text
 
 
@@ -182,5 +182,5 @@ def chat():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8000))
     app.run(host="0.0.0.0", port=port, debug=False)
