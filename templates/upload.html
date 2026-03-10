@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MedRAG — Upload Medical Book</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2230;
+      --border: #2d3748;
+      --accent: #38bdf8;
+      --accent2: #0ea5e9;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --success: #22c55e;
+      --danger: #ef4444;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), #6366f1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo-text {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+    }
+    .logo-text span { color: var(--accent); }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .nav-link:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(56,189,248,0.05);
+    }
+
+    main {
+      flex: 1;
+      max-width: 640px;
+      width: 100%;
+      margin: 60px auto;
+      padding: 0 20px;
+    }
+
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 36px;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .page-title em { color: var(--accent); font-style: italic; }
+
+    .page-sub {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 36px;
+      line-height: 1.6;
+    }
+
+    /* ── DROPZONE ── */
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+      padding: 48px 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      position: relative;
+    }
+
+    .dropzone.drag-over {
+      border-color: var(--accent);
+      background: rgba(56,189,248,0.05);
+    }
+
+    .dropzone.has-file {
+      border-color: var(--success);
+      background: rgba(34,197,94,0.04);
+    }
+
+    .dropzone-icon {
+      font-size: 44px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .dropzone h2 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .dropzone p {
+      color: var(--muted);
+      font-size: 13.5px;
+      margin-bottom: 20px;
+    }
+
+    #fileInput { display: none; }
+
+    .btn-browse {
+      display: inline-block;
+      padding: 9px 22px;
+      background: var(--accent);
+      color: #0d1117;
+      font-weight: 600;
+      font-size: 13.5px;
+      border-radius: 9px;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-browse:hover { background: var(--accent2); }
+    .btn-browse:active { transform: scale(0.96); }
+
+    .file-info {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .file-info.visible { display: flex; }
+
+    .file-icon { font-size: 24px; }
+
+    .file-meta { flex: 1; text-align: left; }
+    .file-name { font-weight: 500; word-break: break-all; }
+    .file-size { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+    .remove-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px 10px;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    .remove-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ── UPLOAD BTN ── */
+    #uploadBtn {
+      display: block;
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--accent), #6366f1);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    #uploadBtn:hover { opacity: 0.9; }
+    #uploadBtn:active { transform: scale(0.98); }
+    #uploadBtn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ── PROGRESS ── */
+    .progress-wrap {
+      display: none;
+      margin-top: 16px;
+    }
+
+    .progress-wrap.visible { display: block; }
+
+    .progress-bar-track {
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #6366f1);
+      border-radius: 6px;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    .progress-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── STATUS ── */
+    .status {
+      display: none;
+      margin-top: 20px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .status.visible { display: block; }
+
+    .status.success {
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.3);
+      color: var(--success);
+    }
+
+    .status.error {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: var(--danger);
+    }
+
+    /* ── INFO CARDS ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 36px;
+    }
+
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .info-card .ic-icon { font-size: 22px; margin-bottom: 8px; }
+    .info-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .info-card p  { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    @media (max-width: 480px) {
+      .info-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🩺</div>
+    <span class="logo-text">Med<span>RAG</span></span>
+  </div>
+  <a href="/" class="nav-link">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+    Chat
+  </a>
+</header>
+
+<main>
+  <h1 class="page-title">Upload a Medical<br><em>Book</em></h1>
+  <p class="page-sub">Upload a PDF and it will be chunked, embedded, and stored in your Pinecone vector index — ready to answer questions instantly.</p>
+
+  <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+    <input type="file" id="fileInput" accept=".pdf" onchange="handleFile(this.files[0])">
+    <span class="dropzone-icon">📄</span>
+    <h2>Drop your PDF here</h2>
+    <p>or click to browse your files</p>
+    <label class="btn-browse" onclick="event.stopPropagation(); document.getElementById('fileInput').click()">
+      Browse Files
+    </label>
+  </div>
+
+  <div class="file-info" id="fileInfo">
+    <div class="file-icon">📑</div>
+    <div class="file-meta">
+      <div class="file-name" id="fileName">—</div>
+      <div class="file-size" id="fileSize">—</div>
+    </div>
+    <button class="remove-btn" onclick="clearFile()">✕ Remove</button>
+  </div>
+
+  <button id="uploadBtn" onclick="uploadFile()" disabled>
+    ⚡ Ingest into Knowledge Base
+  </button>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-label" id="progressLabel">Processing…</div>
+  </div>
+
+  <div class="status" id="statusMsg"></div>
+
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="ic-icon">✂️</div>
+      <h3>Text Chunking</h3>
+      <p>PDF is split into 500-word overlapping chunks for precise retrieval.</p>
+    </div>
+    <div class="info-card">
+      <div class="ic-icon">🔢</div>
+      <h3>Vector Embeddings</h3>
+      <p>Each chunk is encoded to a 384-dim vector using MiniLM.</p>
+    </div>
+    <div class="info-card">
+      <div class="ic-icon">🌲</div>
+      <h3>Pinecone Storage</h3>
+      <p>Vectors are upserted to the <code style="font-family:'DM Mono';font-size:11px">medical-chatbot</code> index.</p>
+    </div>
+    <div class="info-card">
+      <div class="ic-icon">🤖</div>
+      <h3>Instant Queries</h3>
+      <p>Switch to the chat tab and ask any question from the ingested content.</p>
+    </div>
+  </div>
+</main>
+
+<script>
+  let selectedFile = null;
+  const dropzone   = document.getElementById('dropzone');
+  const fileInfo   = document.getElementById('fileInfo');
+  const uploadBtn  = document.getElementById('uploadBtn');
+
+  // Drag & drop
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f && f.name.endsWith('.pdf')) handleFile(f);
+    else showStatus('Only PDF files are accepted.', 'error');
+  });
+
+  function handleFile(file) {
+    if (!file) return;
+    selectedFile = file;
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = formatBytes(file.size);
+    fileInfo.classList.add('visible');
+    dropzone.classList.add('has-file');
+    uploadBtn.disabled = false;
+    clearStatus();
+  }
+
+  function clearFile() {
+    selectedFile = null;
+    document.getElementById('fileInput').value = '';
+    fileInfo.classList.remove('visible');
+    dropzone.classList.remove('has-file');
+    uploadBtn.disabled = true;
+    clearStatus();
+    hideProgress();
+  }
+
+  async function uploadFile() {
+    if (!selectedFile) return;
+
+    uploadBtn.disabled = true;
+    showProgress('Uploading & processing…');
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    // Fake incremental progress for UX
+    let pct = 0;
+    const timer = setInterval(() => {
+      pct = Math.min(pct + Math.random() * 12, 85);
+      setProgress(pct, 'Chunking & embedding…');
+    }, 600);
+
+    try {
+      const res  = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      clearInterval(timer);
+      setProgress(100, 'Done!');
+
+      if (data.error) {
+        showStatus('❌ ' + data.error, 'error');
+      } else {
+        showStatus(`✅ ${data.message}\n📦 ${data.chunks_indexed} chunks indexed into Pinecone.`, 'success');
+        clearFile();
+      }
+    } catch (err) {
+      clearInterval(timer);
+      showStatus('❌ Network error. Please try again.', 'error');
+    }
+
+    setTimeout(hideProgress, 1500);
+    uploadBtn.disabled = false;
+  }
+
+  function showProgress(label) {
+    document.getElementById('progressWrap').classList.add('visible');
+    document.getElementById('progressLabel').textContent = label;
+    document.getElementById('progressFill').style.width = '0%';
+  }
+
+  function setProgress(pct, label) {
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = label;
+  }
+
+  function hideProgress() {
+    document.getElementById('progressWrap').classList.remove('visible');
+  }
+
+  function showStatus(msg, type) {
+    const el = document.getElementById('statusMsg');
+    el.textContent = msg;
+    el.className = `status visible ${type}`;
+  }
+
+  function clearStatus() {
+    const el = document.getElementById('statusMsg');
+    el.className = 'status';
+  }
+
+  function formatBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+    return (b / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+</script>
+</body>
+</html>
